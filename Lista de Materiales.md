@@ -24,6 +24,6 @@ A continuación se detallan los componentes de hardware y elementos electrónico
 ### 🔧 Elementos de Conexión y Chasis
 | Componente | Descripción | Cantidad |
 | :--- | :--- | :---: |
-| **Chasis de Acrílico de 2 Ruedas** | Estructura base para el montaje de motores, sensores y placas. | 1 |
+| **Chasis de Acrílico de 2 Ruedas 3D / Carton** | Estructura base para el montaje de motores, sensores y placas. | 1 |
 | **Cables de Conexión (Jumpers)** | Cables DuPont (Macho-Macho, Macho-Hembra, Hembra-Hembra). | 1 Pack |
 | **Interruptor On/Off (Switch)** | Switch de palanca o botón para el encendido general del sistema. | 1 |
