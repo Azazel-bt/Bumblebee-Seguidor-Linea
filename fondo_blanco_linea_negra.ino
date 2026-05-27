@@ -12,10 +12,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 int VelocidadMotor1 = 6;   // ENA → PWM
 int VelocidadMotor2 = 5;   // ENB → PWM
 
-// REDUCCIÓN DE VELOCIDAD: Cambiado a float (0.7 = 70% de la potencia original)
-// Puedes ajustar este valor (por ejemplo 0.6 o 0.5) para hacerlo aún más lento.
-float velocidad_constante = 1; 
-
 int Motor1A = 13;
 int Motor1B = 12;
 
@@ -45,7 +41,6 @@ unsigned long intervaloParpadeo = 3000;
 // SETUP
 // =============================================================================
 void setup() {
-  // Inicialización del puerto Serial
   Serial.begin(9600);
   Serial.println("--- CONEXIÓN SERIAL ESTABLECIDA CON BUMBLEBEE ---");
 
@@ -68,21 +63,18 @@ void setup() {
   pinMode(VelocidadMotor1, OUTPUT);
   pinMode(VelocidadMotor2, OUTPUT);
   
-  // Aplicación de la velocidad reducida desde el inicio
-  analogWrite(VelocidadMotor1, 125 * velocidad_constante);
-  analogWrite(VelocidadMotor2, 87 * velocidad_constante);
-
   detenerMotores();
 
   // ─── Sensores ────────────────────────────────────────────────────────
   pinMode(infraPin, INPUT);
   pinMode(infraPin1, INPUT);
 
-  // ─── Presentación ────────────────────────────────────────────────────
+  // ─── Presentación Inicial ────────────────────────────────────────────
   escribirTextoInteligente("Bumblebee online");
   delay(20);
   escribirTextoInteligente("Hola profe a que no soy un 5 ");
   delay(20);
+  
   lcd.clear();
   mostrarOjosAbiertos(posicionActual);
   delay(500);
@@ -98,67 +90,37 @@ void setup() {
 }
 
 // =============================================================================
-// LOOP
+// LOOP PRINCIPAL
 // =============================================================================
 void loop() {
-  // ─── Lectura de sensores ────────────────────────────────────────────────
   valorInfra  = digitalRead(infraPin);
   valorInfra1 = digitalRead(infraPin1);
 
-  // ─────────────────────────────────────────────────────────────────────
-  // MONITOR SERIAL GRÁFICO 
-  // ─────────────────────────────────────────────────────────────────────
-  Serial.print("Ojos de Bumblebee:  ");
-  
-  // Sensor Izquierdo (1 = Negro, 0 = Blanco)
-  if (valorInfra == 1) {
-    Serial.print("[■] NEGRO (Izq) ");
-  } else {
-    Serial.print("[ ] BLANCO (Izq)");
-  }
-
-  Serial.print("  <=>  ");
-
-  // Sensor Derecho (1 = Negro, 0 = Blanco)
-  if (valorInfra1 == 1) {
-    Serial.print("(Der) NEGRO [■]");
-  } else {
-    Serial.print("(Der) BLANCO [ ]");
-  }
-
-  Serial.print("   ||   Acción: ");
-
-  // ─────────────────────────────────────────────────────────────────────
-  // LÓGICA SIGUE LÍNEA (Para línea NEGRA y fondo BLANCO)
-  // ─────────────────────────────────────────────────────────────────────
+  // ─── LÓGICA DE SEGUIMIENTO ───────────────────────────────────────────
   if (valorInfra == 0 && valorInfra1 == 0) {
-    Serial.println("▲ AVANZAR RECTO (Centrado)");
-    posicionActual = 4;
     avanzar();
+    posicionActual = 4;
   }
   else if (valorInfra == 0 && valorInfra1 == 1) {
-    Serial.println("► GIRAR A LA DERECHA (Se salió el izquierdo)");
-    posicionActual = 8;
     girarDerecha();
+    posicionActual = 8;
   }
   else if (valorInfra == 1 && valorInfra1 == 0) {
-    Serial.println("◄ GIRAR A LA IZQUIERDA (Se salió el derecho)");
-    posicionActual = 1;
     girarIzquierda();
+    posicionActual = 1;
   }
   else {
-    Serial.println("❌ STOP (Ambos fuera de la línea)");
-    posicionActual = 4;
     detenerMotores();
+    posicionActual = 4;
   }
 
-  // ─── Actualizar ojos en la pantalla LCD ──────────────────────────────
+  // ─── Actualizar la dirección de los ojos en la pantalla LCD ───────────
   if (posicionActual != ultimaPosicion) {
     mostrarOjosAbiertos(posicionActual);
     ultimaPosicion = posicionActual;
   }
 
-  // ─── Parpadeo automático ────────────────────────────────────────────
+  // ─── Sistema de parpadeo automático no bloqueante ─────────────────────
   if (millis() - ultimoParpadeo >= intervaloParpadeo) {
     parpadearRapido(posicionActual);
     mostrarOjosAbiertos(posicionActual);
@@ -169,9 +131,14 @@ void loop() {
 }
 
 // =============================================================================
-// FUNCIONES DE MOVIMIENTO (Sin delays vacíos)
+// FUNCIONES DE MOVIMIENTO CONFIGURABLES
 // =============================================================================
+
 void avanzar() {
+  // Potencia alta y balanceada para que el robot arranque sin problemas en recta
+  analogWrite(VelocidadMotor1, 95); // Motor Izquierdo
+  analogWrite(VelocidadMotor2, 70);  // Motor Derecho (ajustado según tu relación inicial)
+
   digitalWrite(Motor1A, HIGH);
   digitalWrite(Motor1B, LOW);
   digitalWrite(Motor2C, LOW);
@@ -179,20 +146,32 @@ void avanzar() {
 }
 
 void girarDerecha() {
+  // Modificamos las fuerzas en el giro:
+  // El motor izquierdo avanza lento, el motor derecho va hacia atrás muy despacio.
+  // Esto hace que el pivote sea controlado y suave en vez de un latigazo brusco.
+  analogWrite(VelocidadMotor1, 95);  
+  analogWrite(VelocidadMotor2, 70); 
+
   digitalWrite(Motor1A, HIGH);
   digitalWrite(Motor1B, LOW);
-  digitalWrite(Motor2C, HIGH);
+  digitalWrite(Motor2C, HIGH); // Invierte sentido motor derecho
   digitalWrite(Motor2D, LOW);
 }
 
 void girarIzquierda() {
-  digitalWrite(Motor1A, LOW);
+  // Lo mismo para el giro izquierdo
+  analogWrite(VelocidadMotor1, 70);  
+  analogWrite(VelocidadMotor2, 95); 
+
+  digitalWrite(Motor1A, LOW);  // Invierte sentido motor izquierdo
   digitalWrite(Motor1B, HIGH);
   digitalWrite(Motor2C, LOW);
   digitalWrite(Motor2D, HIGH);
 }
 
 void detenerMotores() {
+  analogWrite(VelocidadMotor1, 0);
+  analogWrite(VelocidadMotor2, 0);
   digitalWrite(Motor1A, LOW);
   digitalWrite(Motor1B, LOW);
   digitalWrite(Motor2C, LOW);
@@ -200,10 +179,17 @@ void detenerMotores() {
 }
 
 // =============================================================================
-// FUNCIONES LCD
+// FUNCIONES LCD OPTIMIZADAS
 // =============================================================================
 void mostrarOjosAbiertos(int colInicio) {
-  lcd.clear();
+  static int ultimaColBorrado = 0;
+  if(colInicio != ultimaColBorrado) {
+    lcd.setCursor(ultimaColBorrado, 0);     lcd.print("   ");
+    lcd.setCursor(ultimaColBorrado + 5, 0); lcd.print("   ");
+    lcd.setCursor(ultimaColBorrado, 1);     lcd.print("   ");
+    lcd.setCursor(ultimaColBorrado + 5, 1); lcd.print("   ");
+    ultimaColBorrado = colInicio;
+  }
   dibujarSegmentoOjo(colInicio, 0, 0);
   dibujarSegmentoOjo(colInicio + 5, 0, 0);
   dibujarSegmentoOjo(colInicio, 1, 0);
@@ -211,7 +197,6 @@ void mostrarOjosAbiertos(int colInicio) {
 }
 
 void parpadearRapido(int colInicio) {
-  lcd.clear();
   dibujarSegmentoOjo(colInicio, 0, 1);
   dibujarSegmentoOjo(colInicio + 5, 0, 1);
   dibujarSegmentoOjo(colInicio, 1, 2);
@@ -227,7 +212,7 @@ void dibujarSegmentoOjo(int colInicio, int fila, int charType) {
 }
 
 // =============================================================================
-// TEXTO INTELIGENTE LCD
+// TEXTO INTELIGENTE LCD 
 // =============================================================================
 void escribirTextoInteligente(String texto) {
   lcd.clear();
