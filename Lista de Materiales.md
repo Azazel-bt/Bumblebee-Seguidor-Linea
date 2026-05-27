@@ -19,7 +19,7 @@ A continuación se detallan los componentes de hardware y elementos electrónico
 | Componente | Descripción | Cantidad |
 | :--- | :--- | :---: |
 | **Sensores Infrarrojos TCRT5000** | Módulos seguidores de línea (Salida digital DO conectada a pines 4 y 2). | 2 |
-| **Portabaterías y Baterías Li-ion 18650** | Fuente de alimentación principal (2 celdas en serie $\approx$ 7.4V - 8.4V para separar potencia de lógica). | 1 |
+| **Batería Recargable  9V** | Fuente de alimentación principal . | 1 |
 
 ### 🔧 Elementos de Conexión y Chasis
 | Componente | Descripción | Cantidad |
